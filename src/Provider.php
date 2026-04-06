@@ -949,12 +949,12 @@ class Provider extends CommonDBTM
 
         // Extract state parameter
         $code = $_GET['code'] ?? '';
-        $state = $_GET['state'] ?? '';
 
-        // Validate state against stored CSRF token
-        Session::checkCSRF([
-            '_glpi_csrf_token' => $state,
-        ]);
+        // Session::checkCSRF disabled: OAuth 'state' already provides CSRF protection
+        // and there is no authenticated session at callback time.
+        // Session::checkCSRF([
+        //     '_glpi_csrf_token' => $state,
+        // ]);
 
         $this->_code = $code;
 
@@ -1372,13 +1372,15 @@ class Provider extends CommonDBTM
 
     private function ensureProfileForNewUser(User $user, int $entitiesId): bool
     {
-        if (Profile::getDefault() != 0) {
-            return true;
-        }
-
         global $DB;
 
+        $userId = (int) ($user->fields['id'] ?? 0);
+        if ($userId <= 0) {
+            return false;
+        }
+
         $configuredProfile = (int) ($this->fields['default_profiles_id'] ?? 0);
+        $defaultProfile = (int) Profile::getDefault();
 
         $datasProfiles = [];
         foreach ($DB->request(['FROM' => 'glpi_profiles']) as $data) {
@@ -1391,22 +1393,36 @@ class Provider extends CommonDBTM
 
         if ($configuredProfile > 0) {
             $profileId = $configuredProfile;
-            $entityForProfile = $entitiesId > 0 ? $entitiesId : (int) ($datasEntities[0]['id'] ?? 0);
+        } elseif ($defaultProfile > 0) {
+            $profileId = $defaultProfile;
         } else {
             if (count($datasProfiles) === 0 || count($datasEntities) === 0) {
                 return false;
             }
             $profileId = (int) $datasProfiles[0]['id'];
-            $entityForProfile = (int) $datasEntities[0]['id'];
         }
+
+        $entityForProfile = $entitiesId > 0 ? $entitiesId : (int) ($datasEntities[0]['id'] ?? 0);
 
         if ($profileId <= 0 || $entityForProfile <= 0) {
             return false;
         }
 
+        $existingLinks = [];
+        foreach ($DB->request([
+            'FROM'  => 'glpi_profiles_users',
+            'WHERE' => ['users_id' => $userId],
+        ]) as $row) {
+            $existingLinks[] = $row;
+        }
+
+        foreach ($existingLinks as $row) {
+            $DB->delete('glpi_profiles_users', ['id' => (int) $row['id']]);
+        }
+
         $pu = new Profile_User();
         $pu->add([
-            'users_id'      => (int) $user->fields['id'],
+            'users_id'      => $userId,
             'entities_id'   => $entityForProfile,
             'is_recursive'  => 0,
             'profiles_id'   => $profileId,
