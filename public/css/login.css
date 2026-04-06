@@ -22,14 +22,14 @@
 
 .singlesignon-auth-stack,
 .singlesignon-login {
-    --sso-surface: rgba(255, 255, 255, 0.85);
-    --sso-border: rgba(17, 24, 39, 0.08);
+    --sso-surface: #ffffff;
+    --sso-border: #d1d5db;
     --sso-shadow: 0 14px 30px -22px rgba(15, 23, 42, 0.65);
     --sso-title: #1f2937;
     --sso-text: #4b5563;
     --sso-muted: #6b7280;
-    --sso-button-bg: rgba(255, 255, 255, 0.9);
-    --sso-button-border: rgba(17, 24, 39, 0.12);
+    --sso-button-bg: #ffffff;
+    --sso-button-border: #d1d5db;
     --sso-button-hover: rgba(37, 99, 235, 0.08);
     --sso-button-focus: rgba(59, 130, 246, 0.35);
     --sso-accent: #2563eb;
