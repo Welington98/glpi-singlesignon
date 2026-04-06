@@ -949,7 +949,6 @@ class Provider extends CommonDBTM
 
         // Extract state parameter
         $code = $_GET['code'] ?? '';
-        $state = $_GET['state'] ?? '';
 
         // Session::checkCSRF disabled: OAuth 'state' already provides CSRF protection
         // and there is no authenticated session at callback time.
